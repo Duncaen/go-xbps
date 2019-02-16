@@ -8,13 +8,18 @@ import (
 type PkgVer struct {
 	Name    string
 	Version string
+	Pattern string
 }
 
 func (p PkgVer) String() string {
-	if p.Version != "" {
+	switch {
+	case p.Version != "":
 		return fmt.Sprintf("%s-%s", p.Name, p.Version)
+	case p.Pattern != "":
+		return fmt.Sprintf("%s%s", p.Name, p.Pattern)
+	default:
+		return p.Name
 	}
-	return p.Name
 }
 
 func duckPkgver(s string) PkgVer {
@@ -28,14 +33,10 @@ func duckPkgver(s string) PkgVer {
 	return PkgVer{Name: s}
 }
 
-// Parse splits a string into PkgVer.
-// For package patterns like `pkgname>=version` only the name part is kept.
-// If the string is matches `pkgname-version_revision`, Name is set to
-// `pkgname` and Version to `version_revision`.
-// Otherwise the whole input string is used as Name.
+// Parse splits package name strings into name, version and pattern parts.
 func Parse(s string) PkgVer {
 	if i := strings.IndexAny(s, "><=!"); i != -1 {
-		return PkgVer{Name: s[:i]}
+		return PkgVer{Name: s[:i], Pattern: s[i:]}
 	}
 	return duckPkgver(s)
 }
