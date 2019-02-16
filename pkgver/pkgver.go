@@ -28,6 +28,11 @@ func duckPkgver(s string) PkgVer {
 	return PkgVer{Name: s}
 }
 
+// Parse splits a string into PkgVer.
+// For package patterns like `pkgname>=version` only the name part is kept.
+// If the string is matches `pkgname-version_revision`, Name is set to
+// `pkgname` and Version to `version_revision`.
+// Otherwise the whole input string is used as Name.
 func Parse(s string) PkgVer {
 	if i := strings.IndexAny(s, "><=!"); i != -1 {
 		return PkgVer{Name: s[:i]}
