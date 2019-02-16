@@ -15,18 +15,6 @@ const (
 	NE
 )
 
-var ops = []struct {
-	str string
-	op  Op
-}{
-	{"<=", LE},
-	{"<", LT},
-	{">=", GE},
-	{">", GT},
-	{"==", EQ},
-	{"!=", NE},
-}
-
 type Version struct {
 	v []int
 	r int
@@ -40,18 +28,14 @@ type parse struct {
 	rev int
 }
 
-func (p *parse) number() int {
-	n := 0
-	for ; p.pos < p.len; p.pos++ {
-		c := p.buf[p.pos]
-		if !(c >= '0' && c <= '9') {
-			// p.pos -= 1
-			break
-		}
-		n = (n * 10) + (int(c) - '0')
-	}
-	return n
-}
+// do not modify these values, or things will NOT work
+const (
+	Alpha = -3
+	Beta  = -2
+	RC    = -1
+	Dot   = 0
+	Patch = 1
+)
 
 var modifiers = []struct {
 	str string
@@ -76,6 +60,20 @@ func (p *parse) modifier() bool {
 	return false
 }
 
+func (p *parse) number() int {
+	n := 0
+	for ; p.pos < p.len; p.pos++ {
+		c := p.buf[p.pos]
+		if !(c >= '0' && c <= '9') {
+			// p.pos -= 1
+			break
+		}
+		n = (n * 10) + (int(c) - '0')
+	}
+	return n
+}
+
+// Parses a version string
 func Parse(s string) Version {
 	p := parse{buf: strings.ToLower(s), len: len(s)}
 	for p.pos < p.len {
@@ -97,15 +95,6 @@ func Parse(s string) Version {
 	}
 	return Version{v: p.arr, r: p.rev}
 }
-
-// do not modify these values, or things will NOT work
-const (
-	Alpha = -3
-	Beta  = -2
-	RC    = -1
-	Dot   = 0
-	Patch = 1
-)
 
 type test struct {
 	str string
@@ -163,6 +152,8 @@ func vcmp(lhs Version, op Op, rhs Version) bool {
 	return result(lhs.r-rhs.r, op)
 }
 
+// Compare returns an integer comparing two version strings.
+// The result will be null if a==b, -1 if a < b and +1 if a > b
 func (l Version) Compare(r Version) int {
 	if vcmp(l, LT, r) {
 		return -1
@@ -172,18 +163,25 @@ func (l Version) Compare(r Version) int {
 	return 0
 }
 
-func (l Version) OpCompare(o Op, r Version) bool { return vcmp(l, o, r) }
-func (l Version) LowerThan(r Version) bool       { return vcmp(l, LT, r) }
-func (l Version) LowerEqual(r Version) bool      { return vcmp(l, LE, r) }
-func (l Version) GreaterThan(r Version) bool     { return vcmp(l, GT, r) }
-func (l Version) GreaterEqual(r Version) bool    { return vcmp(l, GE, r) }
-func (l Version) Equal(r Version) bool           { return vcmp(l, EQ, r) }
-func (l Version) NotEqual(r Version) bool        { return vcmp(l, NE, r) }
+// CompareOp uses the operator op to compare two version.
+func (a Version) CompareOp(op Op, b Version) bool { return vcmp(a, op, b) }
 
-func Compare(lhs string, rhs string) int {
-	return Parse(lhs).Compare(Parse(rhs))
+// Returns true if version a is lower than version b
+func (a Version) Lower(b Version) bool { return vcmp(a, LT, b) }
+
+// Returns true if version a is greater than version b
+func (a Version) Greater(b Version) bool { return vcmp(a, GT, b) }
+
+// Returns true if version a is equal to version b
+func (a Version) Equal(b Version) bool { return vcmp(a, EQ, b) }
+
+// Compare returns an integer comparing two version strings.
+// The result will be null if a==b, -1 if a < b and +1 if a > b
+func Compare(a string, b string) int {
+	return Parse(a).Compare(Parse(b))
 }
 
-func OpCompare(lhs string, op Op, rhs string) bool {
-	return Parse(lhs).OpCompare(op, Parse(rhs))
+// CompareOp uses the operator op to compare two version strings.
+func CompareOp(a string, op Op, b string) bool {
+	return Parse(a).CompareOp(op, Parse(b))
 }

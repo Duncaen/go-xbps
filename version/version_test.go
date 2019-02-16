@@ -25,7 +25,7 @@ var parseTests = []struct {
 
 func TestParse(t *testing.T) {
 	for _, tt := range parseTests {
-		if ver := Parse(tt.str); ver.NotEqual(tt.res) {
+		if ver := Parse(tt.str); !ver.Equal(tt.res) {
 			t.Logf("got %v, expected %v", ver, tt.res)
 		}
 	}
