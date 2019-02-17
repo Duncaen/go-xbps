@@ -2,6 +2,7 @@ package pkgver_test
 
 import (
 	"fmt"
+
 	"github.com/Duncaen/go-xbps/pkgver"
 )
 
