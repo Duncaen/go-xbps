@@ -1,16 +1,30 @@
 package pkgver
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
 
-// A PkgVer represents a pkgname, pkgver or pkgpattern
+// A PkgVer represents a name and a version or pattern.
+//
+// The format follows:
+//  pkgver  ::= name (version / pattern)
+//  name    ::= [a-zA-Z0-9-]*
+//  version ::= "-" [^-_]* "_" [^-]*
+//  pattern ::= ("=>" ">" / "<=" / "<" / "==" / "!=") .*
+//
+// Note that a malformed version without "_" will not result in an error.
+// The malformed version part will be part of the name.
 type PkgVer struct {
 	Name    string
 	Version string
 	Pattern string
 }
+
+var (
+	errPattern = errors.New("malformed pattern")
+)
 
 func (p PkgVer) String() string {
 	switch {
@@ -34,10 +48,19 @@ func duckPkgver(s string) PkgVer {
 	return PkgVer{Name: s}
 }
 
-// Parse splits package name strings into name, version and pattern parts.
-func Parse(s string) PkgVer {
-	if i := strings.IndexAny(s, "><=!"); i != -1 {
-		return PkgVer{Name: s[:i], Pattern: s[i:]}
+func parsePattern(s string, i int) (PkgVer, error) {
+	c, l := s[i], len(s[i:])
+	if ((c == '!' || c == '=') && (l < 3 || s[i+1] != '=')) ||
+		(c == '>' || c == '<') && (l < 2 || (s[i+1] == '=' && l < 3)) {
+		return PkgVer{Name: s}, errPattern
 	}
-	return duckPkgver(s)
+	return PkgVer{Name: s[:i], Pattern: s[i:]}, nil
+}
+
+// Parse splits package name strings into name, version and pattern parts.
+func Parse(s string) (PkgVer, error) {
+	if i := strings.IndexAny(s, "><=!"); i != -1 {
+		return parsePattern(s, i)
+	}
+	return duckPkgver(s), nil
 }
