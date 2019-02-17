@@ -1,20 +1,24 @@
+// Package version implements the dewey algorithm xbps uses.
+// It is based on NetBSDs algorithm, but removed the NetBSD nb
+// modifier and added a revision field indicated by underscore (_).
 package version
 
 import (
 	"strings"
 )
 
-type Op int
+type op int
 
 const (
-	LT Op = iota
-	LE
-	EQ
-	GE
-	GT
-	NE
+	oLT op = iota
+	oLE
+	oEQ
+	oGE
+	oGT
+	oNE
 )
 
+// Version represents a parsed version string.
 type Version struct {
 	v []int
 	r int
@@ -28,32 +32,32 @@ type parse struct {
 	rev int
 }
 
-// do not modify these values, or things will NOT work
+// DO NOT MODIFY these values, or things will NOT work.
 const (
-	Alpha = -3
-	Beta  = -2
-	RC    = -1
-	Dot   = 0
-	Patch = 1
+	alpha = -3
+	beta  = -2
+	rc    = -1
+	dot   = 0
 )
 
+// modifier strings and what version and what version they represent.
 var modifiers = []struct {
-	str string
-	num int
+	s string
+	n int
 }{
-	{"alpha", Alpha},
-	{"beta", Beta},
-	{"pre", RC},
-	{"rc", RC},
-	{"pl", Dot},
-	{".", Dot},
+	{"alpha", alpha},
+	{"beta", beta},
+	{"pre", rc},
+	{"rc", rc},
+	{"pl", dot},
+	{".", dot},
 }
 
 func (p *parse) modifier() bool {
 	for _, mod := range modifiers {
-		if strings.HasPrefix(p.buf[p.pos:], mod.str) {
-			p.arr = append(p.arr, mod.num)
-			p.pos += len(mod.str)
+		if strings.HasPrefix(p.buf[p.pos:], mod.s) {
+			p.arr = append(p.arr, mod.n)
+			p.pos += len(mod.s)
 			return true
 		}
 	}
@@ -73,7 +77,7 @@ func (p *parse) number() int {
 	return n
 }
 
-// Parses a version string
+// Parse parses a raw version string
 func Parse(s string) Version {
 	p := parse{buf: strings.ToLower(s), len: len(s)}
 	for p.pos < p.len {
@@ -83,10 +87,10 @@ func Parse(s string) Version {
 			p.arr = append(p.arr, p.number())
 		case p.modifier():
 		case c == '_':
-			p.pos += 1
+			p.pos++
 			p.rev = p.number()
 		case (c >= 'a' && c <= 'z'):
-			p.arr = append(p.arr, Dot)
+			p.arr = append(p.arr, dot)
 			p.arr = append(p.arr, (int(c)-'a')+1)
 			p.pos++
 		default:
@@ -96,25 +100,19 @@ func Parse(s string) Version {
 	return Version{v: p.arr, r: p.rev}
 }
 
-type test struct {
-	str string
-	len int
-	rv  int
-}
-
-func result(cmp int, op Op) bool {
-	switch op {
-	case LT:
+func result(cmp int, o op) bool {
+	switch o {
+	case oLT:
 		return cmp < 0
-	case LE:
+	case oLE:
 		return cmp <= 0
-	case GT:
+	case oGT:
 		return cmp > 0
-	case GE:
+	case oGE:
 		return cmp >= 0
-	case EQ:
+	case oEQ:
 		return cmp == 0
-	case NE:
+	case oNE:
 		return cmp != 0
 	default:
 		return false
@@ -137,51 +135,40 @@ func max(a, b int) int {
 }
 
 func digit(v Version, i int) int {
-	if i < len(v.v) {
+	if i >= len(v.v) {
 		return 0
 	}
 	return v.v[i]
 }
 
-func vcmp(lhs Version, op Op, rhs Version) bool {
+func vcmp(lhs Version, o op, rhs Version) bool {
 	for i := 0; i < max(len(lhs.v), len(rhs.v)); i++ {
 		if cmp := digit(lhs, i) - digit(rhs, i); cmp != 0 {
-			return result(cmp, op)
+			return result(cmp, o)
 		}
 	}
-	return result(lhs.r-rhs.r, op)
+	return result(lhs.r-rhs.r, o)
 }
 
-// Compare returns an integer comparing two version strings.
-// The result will be null if a==b, -1 if a < b and +1 if a > b
-func (l Version) Compare(r Version) int {
-	if vcmp(l, LT, r) {
+// Cmp compares a and b and returns: returns an integer comparing two version strings.
+//  -1 if a <  b
+//   0 if a == b
+//  +1 if a >  b
+func (a Version) Cmp(b Version) int {
+	switch {
+	case vcmp(a, oLT, b):
 		return -1
-	} else if vcmp(l, GT, r) {
+	case vcmp(a, oGT, b):
 		return 1
+	default:
+		return 0
 	}
-	return 0
 }
 
-// CompareOp uses the operator op to compare two version.
-func (a Version) CompareOp(op Op, b Version) bool { return vcmp(a, op, b) }
-
-// Returns true if version a is lower than version b
-func (a Version) Lower(b Version) bool { return vcmp(a, LT, b) }
-
-// Returns true if version a is greater than version b
-func (a Version) Greater(b Version) bool { return vcmp(a, GT, b) }
-
-// Returns true if version a is equal to version b
-func (a Version) Equal(b Version) bool { return vcmp(a, EQ, b) }
-
-// Compare returns an integer comparing two version strings.
-// The result will be null if a==b, -1 if a < b and +1 if a > b
-func Compare(a string, b string) int {
-	return Parse(a).Compare(Parse(b))
-}
-
-// CompareOp uses the operator op to compare two version strings.
-func CompareOp(a string, op Op, b string) bool {
-	return Parse(a).CompareOp(op, Parse(b))
+// Cmp compares a and b and returns: returns an integer comparing two version strings.
+//  -1 if a <  b
+//   0 if a == b
+//  +1 if a >  b
+func Cmp(a string, b string) int {
+	return Parse(a).Cmp(Parse(b))
 }
