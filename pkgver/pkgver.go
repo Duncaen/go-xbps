@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// A PkgVer represents a pkgname, pkgver or pkgpattern
 type PkgVer struct {
 	Name    string
 	Version string
