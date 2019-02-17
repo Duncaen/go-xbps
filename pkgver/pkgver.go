@@ -1,3 +1,13 @@
+// Package pkgver implements parsing of xbps pkgver and pkgpatterns.
+//
+// The parsing follows:
+//  pkgver  ::= name [ ( version / pattern ) ]
+//  name    ::= [a-zA-Z0-9-]*
+//  version ::= "-" [^-_]* "_" [^-]*
+//  pattern ::= ( ">=" ">" / "<=" / "<" / "==" / "!=" ) .+
+//
+// Note that a malformed version without "_" will not result in an error.
+// The malformed version part will be part of the name.
 package pkgver
 
 import (
@@ -6,25 +16,14 @@ import (
 	"strings"
 )
 
-// A PkgVer represents a name and a version or pattern.
-//
-// The format follows:
-//  pkgver  ::= name (version / pattern)
-//  name    ::= [a-zA-Z0-9-]*
-//  version ::= "-" [^-_]* "_" [^-]*
-//  pattern ::= ("=>" ">" / "<=" / "<" / "==" / "!=") .*
-//
-// Note that a malformed version without "_" will not result in an error.
-// The malformed version part will be part of the name.
+// A PkgVer represents a name and optionally version or pattern.
 type PkgVer struct {
 	Name    string
 	Version string
 	Pattern string
 }
 
-var (
-	errPattern = errors.New("malformed pattern")
-)
+var errPattern = errors.New("malformed pattern")
 
 func (p PkgVer) String() string {
 	switch {
@@ -37,6 +36,7 @@ func (p PkgVer) String() string {
 	}
 }
 
+// duckPkgver looks if the string following the last - looks like a version.
 func duckPkgver(s string) PkgVer {
 	if i := strings.LastIndexByte(s, '-'); i != -1 {
 		// if it contains _, it quacks like a version
@@ -48,6 +48,7 @@ func duckPkgver(s string) PkgVer {
 	return PkgVer{Name: s}
 }
 
+// parsePattern checks if the pattern is followed by at least one character
 func parsePattern(s string, i int) (PkgVer, error) {
 	c, l := s[i], len(s[i:])
 	if ((c == '!' || c == '=') && (l < 3 || s[i+1] != '=')) ||
