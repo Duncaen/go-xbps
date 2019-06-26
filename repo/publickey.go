@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/DHowett/go-plist"
+	"howett.net/plist"
 	"golang.org/x/crypto/ssh"
 )
 
