@@ -29,8 +29,8 @@ var remoteSchemes = []string{
 
 // supported local repository schemes
 var localSchemes = []string{
-	"",
 	"file",
+	"",
 }
 
 func (u *URI) isSupported() (bool, error) {
