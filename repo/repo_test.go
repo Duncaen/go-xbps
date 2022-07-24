@@ -4,9 +4,22 @@ import (
 	"testing"
 )
 
-func TestFromFile(t *testing.T) {
-	r := &Repository{}
-	if err := r.Open("/var/db/xbps/https___alpha_de_repo_voidlinux_org_current/x86_64-repodata"); err != nil {
+func TestUnstaged(t *testing.T) {
+	var r *Repository
+	var err error
+	if r, err = Open("/home/duncan/repos/go-xbps/testrepo", "x86_64"); err != nil {
+		t.Fatal(err)
+	}
+	t.Log(r)
+	for k, v := range r.Packages {
+		t.Logf("%v: %v", k, v)
+	}
+}
+
+func TestStaged(t *testing.T) {
+	var r *Repository
+	var err error
+	if r, err = Open("/home/duncan/repos/go-xbps/testrepo-staged", "x86_64"); err != nil {
 		t.Fatal(err)
 	}
 	t.Log(r)
