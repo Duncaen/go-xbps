@@ -3,30 +3,30 @@ package repo
 import (
 	"archive/tar"
 	"bytes"
-	"compress/gzip"
 	"io"
 
 	"howett.net/plist"
+	"github.com/klauspost/compress/zstd"
 )
 
 type Reader struct {
-	gzr *gzip.Reader
+	crd *zstd.Decoder
 	tr *tar.Reader
 }
 
 func NewReader(r io.Reader) (*Reader, error) {
 	var err error
 	rd := &Reader{}
-	rd.gzr, err = gzip.NewReader(r)
+	rd.crd, err = zstd.NewReader(r)
 	if err != nil {
 		return nil, err
 	}
-	rd.tr = tar.NewReader(rd.gzr)
+	rd.tr = tar.NewReader(rd.crd)
 	return rd, nil
 }
 
 func (rd *Reader) Close() {
-	rd.gzr.Close()
+	rd.crd.Close()
 }
 
 func (rd *Reader) Next() (string, error) {
