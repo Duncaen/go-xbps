@@ -3,7 +3,7 @@
 // The parsing follows:
 //  pkgver  ::= name [ ( version / pattern ) ]
 //  name    ::= [a-zA-Z0-9-]*
-//  version ::= "-" [^-_]* "_" [^-]*
+//  version ::= "-" [^-_]* [ "_" [0-9]+ ]
 //  pattern ::= ( ">=" ">" / "<=" / "<" / "==" / "!=" ) .+
 //
 // Note that a malformed version without "_" will not result in an error.
@@ -36,11 +36,23 @@ func (p PkgVer) String() string {
 	}
 }
 
+// onlyDigits returns true if all runes in str are digits, otherwise false
+func onlyDigits(str string) bool {
+	for _, r := range str {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 // duckPkgver looks if the string following the last - looks like a version.
 func duckPkgver(s string) PkgVer {
+	len := len(s)
 	if i := strings.LastIndexByte(s, '-'); i != -1 {
 		// if it contains _, it quacks like a version
-		if i == len(s) || strings.IndexByte(s[i+1:], '_') == -1 {
+		rev := strings.LastIndexByte(s[i+1:], '_')
+		if i == len || rev == -1 || i+1+rev+1 == len || !onlyDigits(s[i+1+rev+1:]) {
 			return PkgVer{Name: s}
 		}
 		return PkgVer{Name: s[:i], Version: s[i+1:]}
