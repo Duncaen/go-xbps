@@ -7,23 +7,35 @@ import (
 func TestUnstaged(t *testing.T) {
 	var r *Repository
 	var err error
-	if r, err = Open("/home/duncan/repos/go-xbps/testrepo", "x86_64"); err != nil {
+	if r, err = Open("/tmp/test-repo2", "x86_64"); err != nil {
 		t.Fatal(err)
 	}
 	t.Log(r)
 	for k, v := range r.Packages {
 		t.Logf("%v: %v", k, v)
+	}
+	for k, v := range r.StagedPackages {
+		t.Logf("%v: %v", k, v)
+	}
+	if r.Staged {
+		t.Fatal("repo is staged")
 	}
 }
 
 func TestStaged(t *testing.T) {
 	var r *Repository
 	var err error
-	if r, err = Open("/home/duncan/repos/go-xbps/testrepo-staged", "x86_64"); err != nil {
+	if r, err = Open("/tmp/test-repo", "x86_64"); err != nil {
 		t.Fatal(err)
 	}
 	t.Log(r)
 	for k, v := range r.Packages {
 		t.Logf("%v: %v", k, v)
+	}
+	for k, v := range r.StagedPackages {
+		t.Logf("%v: %v", k, v)
+	}
+	if ! r.Staged {
+		t.Fatal("repo is not staged")
 	}
 }
