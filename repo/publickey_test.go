@@ -2,7 +2,6 @@ package repo
 
 import (
 	"io/ioutil"
-	"path"
 	"path/filepath"
 	"testing"
 )
@@ -10,7 +9,7 @@ import (
 var root = "/"
 
 func TestFilename(t *testing.T) {
-	keyfiles, err := filepath.Glob(path.Join(root, "var/db/xbps/keys/*.plist"))
+	keyfiles, err := filepath.Glob(filepath.Join(root, "var/db/xbps/keys/*.plist"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,14 +23,14 @@ func TestFilename(t *testing.T) {
 			t.Fatal(err)
 		}
 		res := key.Filename()
-		if res != path.Base(f) {
+		if res != filepath.Base(f) {
 			t.Errorf("Filename() %q does not match %q", res, f)
 		}
 	}
 }
 
-func TestPath(t *testing.T) {
-	keyfiles, err := filepath.Glob(path.Join(root, "var/db/xbps/keys/*.plist"))
+func TestPubkeyPath(t *testing.T) {
+	keyfiles, err := filepath.Glob(filepath.Join(root, "var/db/xbps/keys/*.plist"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +43,7 @@ func TestPath(t *testing.T) {
 		if err := ParsePublicKey(buf, &key); err != nil {
 			t.Fatal(err)
 		}
-		res := key.Path(path.Join(root, "var/db/xbps"))
+		res := key.Path(filepath.Join(root, "var/db/xbps"))
 		if res != f {
 			t.Errorf("Path() %q does not match %q", res, f)
 		}

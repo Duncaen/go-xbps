@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/Duncaen/go-xbps/repo/uri"
 )
@@ -63,6 +63,29 @@ type Repository struct {
 	Stage map[string]Package
 }
 
+func formatpath(u *uri.URI, arch, cachedir string) (string, error) {
+	switch u.Scheme {
+	case "file", "":
+		return filepath.Join(u.Path, fmt.Sprintf("%s-repodata", arch)), nil
+	case "http", "https":
+		if cachedir != "" {
+			return filepath.Join(cachedir, u.CacheString(), fmt.Sprintf("%s-repodata", arch)), nil
+		}
+		return "", fmt.Errorf("repo scheme not supported without cachedir: %s", u.Scheme)
+	default:
+		return "", fmt.Errorf("repo scheme not supported: %s", u.Scheme)
+	}
+}
+
+// Path returns the path to the repodata file for url and arch
+func Path(url, arch, cachedir string) (string, error) {
+	u, err := uri.Parse(url)
+	if err != nil {
+		return "", err
+	}
+	return formatpath(u, arch, cachedir)
+}
+
 // New create a new repository structure
 func New(url, arch string) (*Repository, error) {
 	uri, err := uri.Parse(url)
@@ -92,11 +115,9 @@ func Open(url, arch string) (*Repository, error) {
 // Open reads the repository data from the repositories uri
 func (repo *Repository) Open() error {
 	var repodata string
-	switch repo.URI.Scheme {
-	case "file", "":
-		repodata = path.Join(repo.URI.Path, fmt.Sprintf("%s-repodata", repo.Arch))
-	default:
-		return fmt.Errorf("repo scheme not supported: %s", repo.URI.Scheme)
+	repodata, err := formatpath(repo.URI, repo.Arch, "")
+	if err != nil {
+		return fmt.Errorf("repo could not be openend: %w", err)
 	}
 	f, err := os.Open(repodata)
 	if err != nil {
