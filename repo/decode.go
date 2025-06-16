@@ -31,7 +31,7 @@ func (counter *readCounter) Read(p []byte) (int, error) {
 	return n, err
 }
 
-// Decoder is a repository data reader
+// Decoder is a repository data decoder
 type Decoder struct {
 	reader  readCounter
 	decomp  *zstd.Decoder
@@ -39,7 +39,7 @@ type Decoder struct {
 	header  *tar.Header
 }
 
-// Create a new repository data reader
+// Create a new repository data decoder
 func NewDecoder(r io.Reader) (*Decoder, error) {
 	var err error
 	dec := &Decoder{
