@@ -5,52 +5,71 @@ import (
 	"bytes"
 	"io"
 
-	"howett.net/plist"
 	"github.com/klauspost/compress/zstd"
+	"howett.net/plist"
 )
 
-type Reader struct {
-	crd *zstd.Decoder
-	tr *tar.Reader
+// io.Reader wrapper that counts the number of bytes read
+type readCounter struct {
+	io.Reader
+	n int64
 }
 
-func NewReader(r io.Reader) (*Reader, error) {
+// Read implementation that counts bytes read
+func (counter *readCounter) Read(p []byte) (int, error) {
+	n, err := counter.Reader.Read(p)
+	counter.n += int64(n)
+	return n, err
+}
+
+// Decoder is a repository data reader
+type Decoder struct {
+	inner   readCounter
+	decomp  *zstd.Decoder
+	archive *tar.Reader
+	header  *tar.Header
+}
+
+// Create a new repository data reader
+func NewDecoder(r io.Reader) (*Decoder, error) {
 	var err error
-	rd := &Reader{}
-	rd.crd, err = zstd.NewReader(r)
+	dec := &Decoder{
+		inner: readCounter{r, 0},
+	}
+	dec.decomp, err = zstd.NewReader(&dec.inner)
 	if err != nil {
 		return nil, err
 	}
-	rd.tr = tar.NewReader(rd.crd)
-	return rd, nil
+	dec.archive = tar.NewReader(dec.decomp)
+	return dec, nil
 }
 
-func (rd *Reader) Close() {
-	rd.crd.Close()
+// Close the repository data reader
+func (dec *Decoder) Close() {
+	dec.decomp.Close()
 }
 
-func (rd *Reader) Next() (string, error) {
-	hdr, err := rd.tr.Next()
+// Next returns the name of the next file in the repository data
+func (dec *Decoder) Next() (string, error) {
+	var err error
+	dec.header, err = dec.archive.Next()
 	if err != nil {
 		return "", err
 	}
-	return hdr.Name, nil
+	return dec.header.Name, nil
 }
 
-func (rd *Reader) ReadPackages() (map[string]Package, error) {
+// ReadPackages decodes the current package dictionary inside the repository data
+func (dec *Decoder) ReadPackages() (map[string]Package, error) {
 	buf := &bytes.Buffer{}
-	if _, err := buf.ReadFrom(rd.tr); err != nil {
+	if _, err := buf.ReadFrom(dec.archive); err != nil {
 		return nil, err
 	}
 	rs := bytes.NewReader(buf.Bytes())
-	dec := plist.NewDecoder(rs)
+	plist := plist.NewDecoder(rs)
 	pkgs := make(map[string]Package)
-	if err := dec.Decode(&pkgs); err != nil {
+	if err := plist.Decode(&pkgs); err != nil {
 		return nil, err
 	}
 	return pkgs, nil
-}
-
-func (rd *Reader) ReadPublicKey() PublicKey {
-	return PublicKey{}
 }

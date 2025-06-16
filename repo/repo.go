@@ -47,10 +47,7 @@ const (
 	indexMetaFile = "index-meta.plist"
 )
 
-var (
-	errNoIndex = errors.New("repodata does not contain index.plist")
-)
-
+// New create a new repository structure
 func New(url, arch string) (*Repository, error) {
 	uri, err := uri.Parse(url)
 	if err != nil {
@@ -63,19 +60,20 @@ func (r *Repository) Sync() error {
 	return errors.New("not implemented")
 }
 
+// Open opens and reads a new repository
 func Open(url, arch string) (*Repository, error) {
 	uri, err := uri.Parse(url)
 	if err != nil {
 		return nil, err
 	}
 	r := &Repository{URI: uri, Arch: arch}
-	err = r.Open()
-	if err != nil {
+	if err := r.Open(); err != nil {
 		return nil, err
 	}
 	return r, nil
 }
 
+// Open reads the repository data from the repositories uri
 func (r *Repository) Open() error {
 	var repodata string
 	switch r.URI.Scheme {
@@ -89,42 +87,43 @@ func (r *Repository) Open() error {
 		return fmt.Errorf("repo could not be opened: %w", err)
 	}
 	defer f.Close()
-	if err := r.read(f); err != nil {
+	if _, err := r.ReadFrom(f); err != nil {
 		return fmt.Errorf("repo could not be read: %w", err)
 	}
 	return nil
 }
 
-func (r *Repository) read(f io.Reader) error {
-	rd, err := NewReader(f)
+// ReadFrom reads the repository data from the reader
+func (r *Repository) ReadFrom(rd io.Reader) (int64, error) {
+	dec, err := NewDecoder(rd)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	defer rd.Close()
+	defer dec.Close()
 	var packages map[string]Package
 	var stagePackages map[string]Package
 	for {
-		name, err := rd.Next()
+		name, err := dec.Next()
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return err
+			return dec.inner.n, err
 		}
 		switch name {
 		case indexFile:
-			packages, err = rd.ReadPackages()
+			packages, err = dec.ReadPackages()
 			if err != nil {
-				return err
+				return dec.inner.n, err
 			}
 		case stageFile:
-			stagePackages, err = rd.ReadPackages()
+			stagePackages, err = dec.ReadPackages()
 			if err != nil {
-				return err
+				return dec.inner.n, err
 			}
 		}
 	}
 	r.Packages = packages
 	r.StagedPackages = stagePackages
-	return nil
+	return dec.inner.n, nil
 }
