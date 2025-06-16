@@ -3,6 +3,7 @@ package uri
 import (
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 )
 
@@ -34,29 +35,21 @@ var localSchemes = []string{
 }
 
 func (u *URI) isSupported() (bool, error) {
-	ok := false
-	for _, scheme := range append(remoteSchemes, localSchemes...) {
-		if u.Scheme == scheme {
-			ok = true
-			break
-		}
+	if slices.Contains(remoteSchemes, u.Scheme) {
+		return true, nil
 	}
-	if !ok {
-		return ok, fmt.Errorf("scheme %q is not supported", u.Scheme)
+	if slices.Contains(localSchemes, u.Scheme) {
+		return true, nil
 	}
-	return ok, nil
+	return false, fmt.Errorf("scheme is not supported: %q", u.Scheme)
 }
 
 // IsRemote returns true if the repository URI is remote
 func (u *URI) IsRemote() bool {
-	for _, scheme := range remoteSchemes {
-		if u.Scheme == scheme {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(remoteSchemes, u.Scheme)
 }
 
+// String returns the the url as string
 func (u *URI) String() string {
 	return (*url.URL)(u).String()
 }

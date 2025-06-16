@@ -56,7 +56,7 @@ func TestIsRemote(t *testing.T) {
 
 var cleanStringTests = []struct {
 	rawuri string
-	clean string
+	clean  string
 }{
 	{
 		"http://alpha.de.repo.voidlinux.org/current/",
