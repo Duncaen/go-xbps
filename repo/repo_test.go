@@ -53,13 +53,13 @@ func TestUnstaged(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(r)
-	for k, v := range r.Packages {
+	for k, v := range r.Index {
 		t.Logf("%v: %v", k, v)
 	}
-	for k, v := range r.StagedPackages {
+	for k, v := range r.Stage {
 		t.Logf("%v: %v", k, v)
 	}
-	if len(r.StagedPackages) > 0 {
+	if len(r.Stage) > 0 {
 		t.Fatal("repo is staged")
 	}
 }
@@ -84,13 +84,13 @@ func TestStaged(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(r)
-	for k, v := range r.Packages {
+	for k, v := range r.Index {
 		t.Logf("%v: %v", k, v)
 	}
-	for k, v := range r.StagedPackages {
+	for k, v := range r.Stage {
 		t.Logf("%v: %v", k, v)
 	}
-	if len(r.StagedPackages) == 0 {
+	if len(r.Stage) == 0 {
 		t.Fatal("repo is not staged")
 	}
 }

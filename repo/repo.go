@@ -35,18 +35,25 @@ type Package struct {
 	SourcePkg       string              `plist:"sourcepkg"`
 }
 
+// Meta is a legacy xbps RSA public key
 type Meta struct {
 	Key      []byte `plist:"public-key"`
 	Size     uint16 `plist:"public-key-size"`
 	SignedBy string `plist:"signature-by"`
 }
 
+// Repository is the parsed repository file
 type Repository struct {
-	Arch           string
-	URI            *uri.URI
-	Meta           *Meta
-	Packages       map[string]Package
-	StagedPackages map[string]Package
+	// Arch is the repository architecture
+	Arch string
+	// URI is the parsed repository URI
+	URI *uri.URI
+	// Meta is the repositories legacy xbps RSA public key
+	Meta *Meta
+	// Index is the repository index, mapping package names to packages
+	Index map[string]Package
+	// stage is the repository staging index, mapping package names to packages
+	Stage map[string]Package
 }
 
 // New create a new repository structure
@@ -113,11 +120,11 @@ func (repo *Repository) ReadFrom(rd io.Reader) (int64, error) {
 		}
 		switch name {
 		case IndexEntry:
-			if err := dec.ReadPlist(&repo.Packages); err != nil {
+			if err := dec.ReadPlist(&repo.Index); err != nil {
 				return dec.reader.n, fmt.Errorf("failed to read repository: read packages: %w", err)
 			}
 		case StageEntry:
-			if err := dec.ReadPlist(&repo.StagedPackages); err != nil {
+			if err := dec.ReadPlist(&repo.Stage); err != nil {
 				return dec.reader.n, fmt.Errorf("failed to read repository: read staged packages: %w", err)
 			}
 		case MetaEntry:
