@@ -1,3 +1,10 @@
+// Package repo implements reading xbps repository files.
+//
+// There are two methods for reading repository files:
+//  1. Using the Repository structure and associated functions.
+//  2. Using the Decoder to manually decode the repository file
+//     which allows to skip over files and package metadata that
+//     is not required.
 package repo
 
 import (
