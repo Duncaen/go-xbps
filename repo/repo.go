@@ -89,7 +89,7 @@ func (r *Repository) Open() error {
 	if err != nil {
 		return err
 	}
-	err = r.Read(f)
+	err = r.read(f)
 	if err != nil {
 		f.Close()
 		return err
@@ -98,7 +98,7 @@ func (r *Repository) Open() error {
 	return nil
 }
 
-func (r *Repository) Read(f io.Reader) error {
+func (r *Repository) read(f io.Reader) error {
 	rd, err := NewReader(f)
 	if err != nil {
 		return err
