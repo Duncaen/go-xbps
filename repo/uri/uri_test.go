@@ -88,3 +88,22 @@ func TestCleanString(t *testing.T) {
 		}
 	}
 }
+
+func TestRepodata(t *testing.T) {
+	res, err := Repodata("hostdir/binpkgs", "x86_64", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect := "hostdir/binpkgs/x86_64-repodata"
+	if res != expect {
+		t.Fatalf("expected %q, got %q\n", expect, res)
+	}
+	res, err = Repodata("https://repo-default.voidlinux.org/current", "x86_64", "/var/cache/xbps")
+	if err != nil {
+		t.Fatal(err)
+	}
+	expect = "/var/cache/xbps/https___repo-default_voidlinux_org_current/x86_64-repodata"
+	if res != expect {
+		t.Fatalf("expected %q, got %q\n", expect, res)
+	}
+}

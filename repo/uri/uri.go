@@ -3,6 +3,7 @@ package uri
 import (
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"slices"
 	"strings"
 )
@@ -60,4 +61,28 @@ func (u *URI) String() string {
 func (u *URI) CacheString() string {
 	replacer := strings.NewReplacer(".", "_", "/", "_", ":", "_")
 	return fmt.Sprintf("%s___%s%s", replacer.Replace(u.Scheme), replacer.Replace(u.Host), replacer.Replace(u.Path))
+}
+
+// Repodata returns the repodata path for arch either in its directory or the cache directory
+func (u *URI) Repodata(arch, cachedir string) (string, error) {
+	switch u.Scheme {
+	case "file", "":
+		return filepath.Join(u.Path, fmt.Sprintf("%s-repodata", arch)), nil
+	case "http", "https":
+		if cachedir != "" {
+			return filepath.Join(cachedir, u.CacheString(), fmt.Sprintf("%s-repodata", arch)), nil
+		}
+		return "", fmt.Errorf("repo scheme not supported without cachedir: %s", u.Scheme)
+	default:
+		return "", fmt.Errorf("repo scheme not supported: %s", u.Scheme)
+	}
+}
+
+// Parses url and returns the repodata path for arch either in its directory or the cache directory
+func Repodata(url, arch, cachedir string) (string, error) {
+	u, err := Parse(url)
+	if err != nil {
+		return "", err
+	}
+	return u.Repodata(arch, cachedir)
 }
