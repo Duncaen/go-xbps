@@ -24,7 +24,7 @@ func (counter *readCounter) Read(p []byte) (int, error) {
 
 // Decoder is a repository data reader
 type Decoder struct {
-	inner   readCounter
+	reader  readCounter
 	decomp  *zstd.Decoder
 	archive *tar.Reader
 	header  *tar.Header
@@ -34,9 +34,9 @@ type Decoder struct {
 func NewDecoder(r io.Reader) (*Decoder, error) {
 	var err error
 	dec := &Decoder{
-		inner: readCounter{r, 0},
+		reader: readCounter{r, 0},
 	}
-	dec.decomp, err = zstd.NewReader(&dec.inner)
+	dec.decomp, err = zstd.NewReader(&dec.reader)
 	if err != nil {
 		return nil, err
 	}
