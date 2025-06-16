@@ -96,8 +96,6 @@ func (r *Repository) ReadFrom(rd io.Reader) (int64, error) {
 	}
 	defer dec.Close()
 
-	var packages map[string]Package
-	var stagePackages map[string]Package
 	for {
 		name, err := dec.Next()
 		if err != nil {
@@ -108,16 +106,14 @@ func (r *Repository) ReadFrom(rd io.Reader) (int64, error) {
 		}
 		switch name {
 		case IndexEntry:
-			if err := dec.ReadPlist(&packages); err != nil {
+			if err := dec.ReadPlist(&r.Packages); err != nil {
 				return dec.reader.n, fmt.Errorf("failed to read repository: read packages: %w", err)
 			}
 		case StageEntry:
-			if err := dec.ReadPlist(&stagePackages); err != nil {
+			if err := dec.ReadPlist(&r.StagedPackages); err != nil {
 				return dec.reader.n, fmt.Errorf("failed to read repository: read staged packages: %w", err)
 			}
 		}
 	}
-	r.Packages = packages
-	r.StagedPackages = stagePackages
 	return dec.reader.n, nil
 }
