@@ -61,35 +61,35 @@ func Open(url, arch string) (*Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := &Repository{URI: uri, Arch: arch}
-	if err := r.Open(); err != nil {
+	repo := &Repository{URI: uri, Arch: arch}
+	if err := repo.Open(); err != nil {
 		return nil, err
 	}
-	return r, nil
+	return repo, nil
 }
 
 // Open reads the repository data from the repositories uri
-func (r *Repository) Open() error {
+func (repo *Repository) Open() error {
 	var repodata string
-	switch r.URI.Scheme {
+	switch repo.URI.Scheme {
 	case "file", "":
-		repodata = path.Join(r.URI.Path, fmt.Sprintf("%s-repodata", r.Arch))
+		repodata = path.Join(repo.URI.Path, fmt.Sprintf("%s-repodata", repo.Arch))
 	default:
-		return fmt.Errorf("repo scheme not supported: %s", r.URI.Scheme)
+		return fmt.Errorf("repo scheme not supported: %s", repo.URI.Scheme)
 	}
 	f, err := os.Open(repodata)
 	if err != nil {
 		return fmt.Errorf("repo could not be opened: %w", err)
 	}
 	defer f.Close()
-	if _, err := r.ReadFrom(f); err != nil {
+	if _, err := repo.ReadFrom(f); err != nil {
 		return fmt.Errorf("repo could not be read: %w", err)
 	}
 	return nil
 }
 
 // ReadFrom reads the repository data from the reader
-func (r *Repository) ReadFrom(rd io.Reader) (int64, error) {
+func (repo *Repository) ReadFrom(rd io.Reader) (int64, error) {
 	dec, err := NewDecoder(rd)
 	if err != nil {
 		return 0, err
@@ -106,11 +106,11 @@ func (r *Repository) ReadFrom(rd io.Reader) (int64, error) {
 		}
 		switch name {
 		case IndexEntry:
-			if err := dec.ReadPlist(&r.Packages); err != nil {
+			if err := dec.ReadPlist(&repo.Packages); err != nil {
 				return dec.reader.n, fmt.Errorf("failed to read repository: read packages: %w", err)
 			}
 		case StageEntry:
-			if err := dec.ReadPlist(&r.StagedPackages); err != nil {
+			if err := dec.ReadPlist(&repo.StagedPackages); err != nil {
 				return dec.reader.n, fmt.Errorf("failed to read repository: read staged packages: %w", err)
 			}
 		}
