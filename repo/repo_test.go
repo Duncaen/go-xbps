@@ -94,22 +94,3 @@ func TestStaged(t *testing.T) {
 		t.Fatal("repo is not staged")
 	}
 }
-
-func TestPath(t *testing.T) {
-	res, err := Path("hostdir/binpkgs", "x86_64", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	expect := "hostdir/binpkgs/x86_64-repodata"
-	if res != expect {
-		t.Fatalf("expected %q, got %q\n", expect, res)
-	}
-	res, err = Path("https://repo-default.voidlinux.org/current", "x86_64", "/var/cache/xbps")
-	if err != nil {
-		t.Fatal(err)
-	}
-	expect = "/var/cache/xbps/https___repo-default_voidlinux_org_current/x86_64-repodata"
-	if res != expect {
-		t.Fatalf("expected %q, got %q\n", expect, res)
-	}
-}

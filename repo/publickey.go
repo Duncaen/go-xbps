@@ -6,10 +6,10 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"path/filepath"
+	"path"
 
-	"golang.org/x/crypto/ssh"
 	"howett.net/plist"
+	"golang.org/x/crypto/ssh"
 )
 
 // plist structure of xbps generated key files.
@@ -54,7 +54,7 @@ func (p *PublicKey) UnmarshalPlist(unmarshal func(interface{}) error) error {
 
 // Returns the path where xbps would store the public key
 func (p *PublicKey) Path(dbdir string) string {
-	return filepath.Join(dbdir, "keys", p.Filename())
+	return path.Join(dbdir, "keys", p.Filename())
 }
 
 // Returns the filename xbps would use to store the public key
