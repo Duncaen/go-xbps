@@ -83,18 +83,16 @@ func (r *Repository) Open() error {
 	case "file", "":
 		repodata = path.Join(r.URI.Path, fmt.Sprintf("%s-repodata", r.Arch))
 	default:
-		return errors.New("not implemented")
+		return fmt.Errorf("repo scheme not supported: %s", r.URI.Scheme)
 	}
 	f, err := os.Open(repodata)
 	if err != nil {
-		return err
+		return fmt.Errorf("repo could not be opened: %w", err)
 	}
-	err = r.read(f)
-	if err != nil {
-		f.Close()
-		return err
+	defer f.Close()
+	if err := r.read(f); err != nil {
+		return fmt.Errorf("repo could not be read: %w", err)
 	}
-	f.Close()
 	return nil
 }
 
