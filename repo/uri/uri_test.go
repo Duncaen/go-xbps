@@ -82,7 +82,7 @@ func TestCleanString(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		s := u.CleanString()
+		s := u.CacheString()
 		if s != tt.clean {
 			t.Errorf("%q returned %q expected %q", tt.rawuri, s, tt.clean)
 		}

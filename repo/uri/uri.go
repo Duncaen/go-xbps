@@ -54,7 +54,10 @@ func (u *URI) String() string {
 	return (*url.URL)(u).String()
 }
 
-// Directory returns
-func (u *URI) CleanString() string {
-	return strings.NewReplacer(".", "_", "/", "_", ":", "_").Replace(u.String())
+// CacheString returns the urls string with some characters replaced
+//
+// It is is intended to be used as directory name for the cache.
+func (u *URI) CacheString() string {
+	replacer := strings.NewReplacer(".", "_", "/", "_", ":", "_")
+	return fmt.Sprintf("%s___%s%s", replacer.Replace(u.Scheme), replacer.Replace(u.Host), replacer.Replace(u.Path))
 }
