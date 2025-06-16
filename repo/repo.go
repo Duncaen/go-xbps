@@ -32,6 +32,7 @@ type Package struct {
 	ShlibRequires   []string            `plist:"shlib-requires"`
 	ShortDesc       string              `plist:"short_desc"`
 	SourceRevisions string              `plist:"source-revisions"`
+	SourcePkg       string              `plist:"sourcepkg"`
 }
 
 type Repository struct {
