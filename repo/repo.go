@@ -42,12 +42,6 @@ type Repository struct {
 	StagedPackages map[string]Package
 }
 
-const (
-	indexFile     = "index.plist"
-	stageFile     = "stage.plist"
-	indexMetaFile = "index-meta.plist"
-)
-
 // New create a new repository structure
 func New(url, arch string) (*Repository, error) {
 	uri, err := uri.Parse(url)
@@ -113,14 +107,12 @@ func (r *Repository) ReadFrom(rd io.Reader) (int64, error) {
 			return dec.reader.n, fmt.Errorf("failed to read repository: read header: %w", err)
 		}
 		switch name {
-		case indexFile:
-			packages, err = dec.ReadPackages()
-			if err != nil {
+		case IndexEntry:
+			if err := dec.ReadPlist(&packages); err != nil {
 				return dec.reader.n, fmt.Errorf("failed to read repository: read packages: %w", err)
 			}
-		case stageFile:
-			stagePackages, err = dec.ReadPackages()
-			if err != nil {
+		case StageEntry:
+			if err := dec.ReadPlist(&stagePackages); err != nil {
 				return dec.reader.n, fmt.Errorf("failed to read repository: read staged packages: %w", err)
 			}
 		}

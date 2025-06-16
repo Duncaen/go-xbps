@@ -9,7 +9,16 @@ import (
 	"howett.net/plist"
 )
 
-// io.Reader wrapper that counts the number of bytes read
+const (
+	// IndexEntry is the file name of the index inside the repository data
+	IndexEntry = "index.plist"
+	// StageEntry is the file name of the stage inside the repository data
+	StageEntry = "stage.plist"
+	// MetaEntry is the file name of the metadata inside the repository data
+	MetaEntry = "index-meta.plist"
+)
+
+// readCounter is a io.Reader wrapper that counts the number of bytes read
 type readCounter struct {
 	io.Reader
 	n int64
@@ -59,17 +68,16 @@ func (dec *Decoder) Next() (string, error) {
 	return dec.header.Name, nil
 }
 
-// ReadPackages decodes the current package dictionary inside the repository data
-func (dec *Decoder) ReadPackages() (map[string]Package, error) {
+// ReadPlist reads the current repository entry and decodes its plist into v
+func (dec *Decoder) ReadPlist(v any) error {
 	buf := &bytes.Buffer{}
 	if _, err := buf.ReadFrom(dec.archive); err != nil {
-		return nil, err
+		return err
 	}
 	rs := bytes.NewReader(buf.Bytes())
 	plist := plist.NewDecoder(rs)
-	pkgs := make(map[string]Package)
-	if err := plist.Decode(&pkgs); err != nil {
-		return nil, err
+	if err := plist.Decode(v); err != nil {
+		return err
 	}
-	return pkgs, nil
+	return nil
 }
