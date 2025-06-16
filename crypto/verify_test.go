@@ -4,17 +4,30 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
-	"io/ioutil"
+	"io"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/Duncaen/go-xbps/repo"
-	"github.com/Duncaen/go-xbps/util"
 )
 
 var root = "/"
+
+func fileSha256(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err = io.Copy(h, f); err != nil {
+		return nil, err
+	}
+	return h.Sum(nil), nil
+}
 
 func readAllKeys() ([]repo.PublicKey, error) {
 	keyfiles, err := filepath.Glob(path.Join(root, "var/db/xbps/keys/*.plist"))
@@ -23,7 +36,7 @@ func readAllKeys() ([]repo.PublicKey, error) {
 	}
 	keys := make([]repo.PublicKey, len(keyfiles))
 	for i, f := range keyfiles {
-		buf, err := ioutil.ReadFile(f)
+		buf, err := os.ReadFile(f)
 		if err != nil {
 			return nil, err
 		}
@@ -48,11 +61,11 @@ func TestVerify(t *testing.T) {
 		if i > 10 {
 			break
 		}
-		hash, err := util.FileSha256(strings.TrimSuffix(sigf, ".sig"))
+		hash, err := fileSha256(strings.TrimSuffix(sigf, ".sig"))
 		if err != nil {
 			continue
 		}
-		sig, err := ioutil.ReadFile(sigf)
+		sig, err := os.ReadFile(sigf)
 		if err != nil {
 			t.Log(err)
 			continue
