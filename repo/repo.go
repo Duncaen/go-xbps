@@ -39,7 +39,6 @@ type Repository struct {
 	URI            *uri.URI
 	Packages       map[string]Package
 	StagedPackages map[string]Package
-	Staged         bool
 }
 
 const (
@@ -124,11 +123,6 @@ func (r *Repository) read(f io.Reader) error {
 				return err
 			}
 		}
-	}
-	if len(stagePackages) > 0 {
-		r.Staged = true
-	} else {
-		r.Staged = false
 	}
 	r.Packages = packages
 	r.StagedPackages = stagePackages
