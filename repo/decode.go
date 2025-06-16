@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"io"
+	"strings"
 
 	"github.com/klauspost/compress/zstd"
 	"howett.net/plist"
@@ -70,9 +71,16 @@ func (dec *Decoder) Next() (string, error) {
 
 // ReadPlist reads the current repository entry and decodes its plist into v
 func (dec *Decoder) ReadPlist(v any) error {
+	if dec.header.Size == 0 {
+		return nil
+	}
 	buf := &bytes.Buffer{}
 	if _, err := buf.ReadFrom(dec.archive); err != nil {
 		return err
+	}
+	// Compatibility with old xbps versions
+	if strings.Compare(buf.String(), "DEADBEEF") == 0 {
+		return nil
 	}
 	rs := bytes.NewReader(buf.Bytes())
 	plist := plist.NewDecoder(rs)

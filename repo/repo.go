@@ -35,9 +35,16 @@ type Package struct {
 	SourcePkg       string              `plist:"sourcepkg"`
 }
 
+type Meta struct {
+	Key      []byte `plist:"public-key"`
+	Size     uint16 `plist:"public-key-size"`
+	SignedBy string `plist:"signature-by"`
+}
+
 type Repository struct {
 	Arch           string
 	URI            *uri.URI
+	Meta           *Meta
 	Packages       map[string]Package
 	StagedPackages map[string]Package
 }
@@ -112,6 +119,11 @@ func (repo *Repository) ReadFrom(rd io.Reader) (int64, error) {
 		case StageEntry:
 			if err := dec.ReadPlist(&repo.StagedPackages); err != nil {
 				return dec.reader.n, fmt.Errorf("failed to read repository: read staged packages: %w", err)
+			}
+		case MetaEntry:
+			repo.Meta = &Meta{}
+			if err := dec.ReadPlist(repo.Meta); err != nil {
+				return dec.reader.n, fmt.Errorf("failed to read repository: read : %w", err)
 			}
 		}
 	}
