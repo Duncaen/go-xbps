@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 
 	"github.com/Duncaen/go-xbps/repo/uri"
 )
@@ -91,12 +90,9 @@ func Open(url, arch string) (*Repository, error) {
 
 // Open reads the repository data from the repositories uri
 func (repo *Repository) Open() error {
-	var repodata string
-	switch repo.URI.Scheme {
-	case "file", "":
-		repodata = path.Join(repo.URI.Path, fmt.Sprintf("%s-repodata", repo.Arch))
-	default:
-		return fmt.Errorf("repo scheme not supported: %s", repo.URI.Scheme)
+	repodata, err := repo.URI.Repodata(repo.Arch, "")
+	if err != nil {
+		return fmt.Errorf("repo could no be opened: %w", err)
 	}
 	f, err := os.Open(repodata)
 	if err != nil {
