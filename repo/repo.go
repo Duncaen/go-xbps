@@ -35,13 +35,16 @@ type Package struct {
 }
 
 type Repository struct {
-	Arch     string
-	URI      *uri.URI
-	Packages map[string]Package
+	Arch           string
+	URI            *uri.URI
+	Packages       map[string]Package
+	StagedPackages map[string]Package
+	Staged         bool
 }
 
 const (
-	indexFile = "index.plist"
+	indexFile     = "index.plist"
+	stageFile     = "stage.plist"
 	indexMetaFile = "index-meta.plist"
 )
 
@@ -75,11 +78,10 @@ func Open(url, arch string) (*Repository, error) {
 }
 
 func (r *Repository) Open() error {
-	var repodata, stagedata string
+	var repodata string
 	switch r.URI.Scheme {
 	case "file", "":
 		repodata = path.Join(r.URI.Path, fmt.Sprintf("%s-repodata", r.Arch))
-		stagedata = path.Join(r.URI.Path, fmt.Sprintf("%s-stagedata", r.Arch))
 	default:
 		return errors.New("not implemented")
 	}
@@ -87,53 +89,50 @@ func (r *Repository) Open() error {
 	if err != nil {
 		return err
 	}
-	repopkgs, err := r.Read(f)
+	err = r.Read(f)
 	if err != nil {
 		f.Close()
 		return err
 	}
-	r.Packages = repopkgs
 	f.Close()
-	f, err = os.Open(stagedata)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
-		return nil
-	}
-	stagepkgs, err := r.Read(f)
-	if err != nil {
-		f.Close()
-		return err
-	}
-	for k, v := range stagepkgs {
-		r.Packages[k] = v
-	}
 	return nil
 }
 
-func (r *Repository) Read(f io.Reader) (map[string]Package, error) {
+func (r *Repository) Read(f io.Reader) error {
 	rd, err := NewReader(f)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer rd.Close()
 	var packages map[string]Package
+	var stagePackages map[string]Package
 	for {
 		name, err := rd.Next()
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return nil, err
+			return err
 		}
 		switch name {
 		case indexFile:
 			packages, err = rd.ReadPackages()
 			if err != nil {
-				return nil, err
+				return err
+			}
+		case stageFile:
+			stagePackages, err = rd.ReadPackages()
+			if err != nil {
+				return err
 			}
 		}
 	}
-	return packages, nil
+	if len(stagePackages) > 0 {
+		r.Staged = true
+	} else {
+		r.Staged = false
+	}
+	r.Packages = packages
+	r.StagedPackages = stagePackages
+	return nil
 }

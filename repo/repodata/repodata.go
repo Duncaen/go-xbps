@@ -6,6 +6,7 @@ import (
 
 const (
 	IndexFile     = "index.plist"
+	StageFile     = "stage.plist"
 	IndexMetaFile = "index-meta.plist"
 )
 
@@ -41,6 +42,7 @@ type Meta struct {
 
 type RepoData struct {
 	Index map[string]Package `repodata:"index.plist"`
+	Stage map[string]Package `repodata:"stage.plist"`
 	Meta  Meta               `repodata:"index-meta.plist"`
 }
 
